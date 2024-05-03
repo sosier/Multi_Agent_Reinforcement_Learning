@@ -19,6 +19,7 @@ class raw_env(SimpleEnv, EzPickle):
         max_cycles=25,
         continuous_actions=False,
         render_mode=None,
+        comm_mode=0,
     ):
         EzPickle.__init__(
             self,
@@ -31,7 +32,7 @@ class raw_env(SimpleEnv, EzPickle):
         assert (
             0.0 <= local_ratio <= 1.0
         ), "local_ratio is a proportion. Must be between 0 and 1."
-        scenario = Scenario()
+        scenario = Scenario(comm_mode)
         world = scenario.make_world(N)
         SimpleEnv.__init__(
             self,
@@ -52,6 +53,8 @@ parallel_env = parallel_wrapper_fn(env)
 
 
 class Scenario(BaseScenario):
+    def __init__(self, comm_mode):
+        self.comm_mode = comm_mode
     def make_world(self, N=3):
         world = World()
         # set any world properties first
@@ -146,8 +149,13 @@ class Scenario(BaseScenario):
         for other in world.agents:
             if other is agent:
                 continue
-            other.state.c[0] = 8
-            comm.append(other.state.c)
+            if self.comm_mode == 0:
+                other.state.c[0] = 5
+            elif self.comm_mode == 1:
+                other.state.c[0] = 25
+#             comm.append(other.state.c)
+            comm.append(other.state.p_pos)
+            print(other.state.p_pos)
             other_pos.append(other.state.p_pos - agent.state.p_pos)
         return np.concatenate(
             [agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + comm
