@@ -149,14 +149,23 @@ class Scenario(BaseScenario):
         for other in world.agents:
             if other is agent:
                 continue
-            if self.comm_mode == 0:
-                other.state.c[0] = 5
-            elif self.comm_mode == 1:
-                other.state.c[0] = 25
-#             comm.append(other.state.c)
-            comm.append(other.state.p_pos)
-            print(other.state.p_pos)
+            if self.comm_mode == 2:
+                comm.append(other.state.p_vel)
+            if self.comm_mode == 3:
+                comm.append([np.linalg.norm(other.state.p_pos - tgt.state.p_pos) for tgt in world.landmarks])
+            if self.comm_mode == 4:
+                near = any(np.linalg.norm(other.state.p_pos - lm.state.p_pos) < 0.5 for lm in world.landmarks)
+                comm.append([1] if near else [0])
             other_pos.append(other.state.p_pos - agent.state.p_pos)
-        return np.concatenate(
-            [agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + comm
-        )
+        if self.comm_mode == 0:
+            return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos)
+        if self.comm_mode == 1:
+            return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos)
+        else:
+            return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + comm)
+        # NOTES
+        # If comm mode = 0, returns masked version with no info on other agents positions. If comm mode = 1, then returns
+        # pseudo masked version where other agents positions are included but no other communication. If comm mode = 2, then
+        # communication included with other agent velocities. If comm mode = 3, returns euclidian distance between other 
+        # node and each of the other landmarks. If comm mode = 4, returns binary var indicating whether the other node
+        # is within xxx distance of any landmark.
