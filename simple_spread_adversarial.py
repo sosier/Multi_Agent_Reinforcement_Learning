@@ -21,7 +21,7 @@ class raw_env(SimpleEnv, EzPickle):
         continuous_actions=False,
         render_mode=None,
     ):
-        assert n_agents > 0 and n_adversaries > 0 and n_landmarks > 0
+        assert n_agents > 0 and n_landmarks > 0
         EzPickle.__init__(
             self,
             n_agents=n_agents,
