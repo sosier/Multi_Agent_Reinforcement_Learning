@@ -14,7 +14,8 @@ from pettingzoo.utils.conversions import parallel_wrapper_fn
 class raw_env(SimpleEnv, EzPickle):
     def __init__(
         self,
-        N=3,
+        n_agents=2,
+        n_landmarks=2,
         local_ratio=0.5,
         max_cycles=25,
         continuous_actions=False,
@@ -23,7 +24,7 @@ class raw_env(SimpleEnv, EzPickle):
     ):
         EzPickle.__init__(
             self,
-            N=N,
+            n_agents=n_agents,
             local_ratio=local_ratio,
             max_cycles=max_cycles,
             continuous_actions=continuous_actions,
@@ -32,8 +33,8 @@ class raw_env(SimpleEnv, EzPickle):
         assert (
             0.0 <= local_ratio <= 1.0
         ), "local_ratio is a proportion. Must be between 0 and 1."
-        scenario = Scenario(comm_mode)
-        world = scenario.make_world(N)
+        scenario = Scenario(comm_mode, n_agents, n_landmarks)
+        world = scenario.make_world(n_agents, n_landmarks)
         SimpleEnv.__init__(
             self,
             scenario=scenario,
@@ -53,14 +54,16 @@ parallel_env = parallel_wrapper_fn(env)
 
 
 class Scenario(BaseScenario):
-    def __init__(self, comm_mode):
+    def __init__(self, comm_mode, n_agents, n_landmarks):
         self.comm_mode = comm_mode
-    def make_world(self, N=3):
+        self.n_agents = comm_mode
+        self.n_landmarks = comm_mode
+    def make_world(self, n_agents=2, n_landmarks=2):
         world = World()
         # set any world properties first
         world.dim_c = 2
-        num_agents = N
-        num_landmarks = N
+        num_agents = n_agents
+        num_landmarks = n_landmarks
         world.collaborative = True
         # add agents
         world.agents = [Agent() for i in range(num_agents)]
@@ -168,4 +171,4 @@ class Scenario(BaseScenario):
         # pseudo masked version where other agents positions are included but no other communication. If comm mode = 2, then
         # communication included with other agent velocities. If comm mode = 3, returns euclidian distance between other 
         # node and each of the other landmarks. If comm mode = 4, returns binary var indicating whether the other node
-        # is within xxx distance of any landmark.
+        # is within .5 L2 distance of any landmark.
