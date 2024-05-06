@@ -159,6 +159,9 @@ class Scenario(BaseScenario):
             if self.comm_mode == 4:
                 near = any(np.linalg.norm(other.state.p_pos - lm.state.p_pos) < 0.5 for lm in world.landmarks)
                 comm.append([1] if near else [0])
+            if self.comm_mode == 5:
+                comm.append(other.state.p_vel)
+                comm.append([np.linalg.norm(other.state.p_pos - tgt.state.p_pos) for tgt in world.landmarks])
             other_pos.append(other.state.p_pos - agent.state.p_pos)
         if self.comm_mode == 0:
             return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos)
@@ -171,4 +174,5 @@ class Scenario(BaseScenario):
         # pseudo masked version where other agents positions are included but no other communication. If comm mode = 2, then
         # communication included with other agent velocities. If comm mode = 3, returns euclidian distance between other 
         # node and each of the other landmarks. If comm mode = 4, returns binary var indicating whether the other node
-        # is within .5 L2 distance of any landmark.
+        # is within .5 euclidian distance of any landmark. If comm mode = 5, the comm vector contains the velocities of other
+        # agents and then the euclidian distance to each of the landmarks
